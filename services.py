@@ -21,9 +21,9 @@ def conectar():
     return sqlite3.connect("database_horas_extras.db")
 #
 def criar_tabela():
+    #verifica se ja existe um banco de dados criado
     if not os.path.exists("database_horas_extras.db"):
-        
-        
+        #abre a conexão com o banco de dados e não precisa fechar manualmente com o conn close()
         with conectar() as conn:
             cursor = conn.cursor()
             ano_atual = datetime.now().year
@@ -40,10 +40,10 @@ def criar_tabela():
                 valores_iniciais = []
                 for col in colunas:
                     if col.lower() == 'nome':
-                        valores_iniciais.append('"OperadorExemplo"')
+                        valores_iniciais.append(f'"OperadorExemplo_{mes}"')
                     elif col.lower() == 'supervisor':
-                        valores_iniciais.append('"SupervisorExemplo"')
-                    elif col.lower() == 'total de horas':
+                        valores_iniciais.append(f'"SupervisorExemplo_{mes}"')
+                    elif col.lower() == 'total_horas':
                         valores_iniciais.append('"00:00:00"')
                     else:
                         valores_iniciais.append('"00:00:00"')
@@ -66,14 +66,11 @@ def criar_tabela():
             conn.commit()
 #
 def carregar_supervisores(nome_tabela: str):
-    conn = conectar()
-    cursor = conn.cursor()
+    with conectar() as conn:
+        cursor = conn.cursor()
 
-    cursor.execute(f"SELECT DISTINCT supervisor FROM {nome_tabela}")
-    supervisores = cursor.fetchall()  # lista de tuplas [(nome1,), (nome2,), ...]
-
-    cursor.close()
-    conn.close()
+        cursor.execute(f"SELECT DISTINCT supervisor FROM {nome_tabela}")
+        supervisores = cursor.fetchall()  # lista de tuplas [(nome1,), (nome2,), ...]
 
     # Retorna apenas os nomes como uma lista simples
     lista_supervisores = [s[0] for s in supervisores if s[0] is not None]
@@ -83,9 +80,6 @@ def carregar_supervisores(nome_tabela: str):
     return lista_supervisores
 #
 def carregar_tabela_banco_de_dados(nome_tabela: str, supervisor: str, table_view: QTableView):
-    #print("[DEBUG 1] este é o supervisor:", supervisor)
-    #traceback.print_stack(limit=2)
-
     try:
         conn = conectar()
         cursor = conn.cursor()
@@ -184,7 +178,6 @@ def carregar_tabela_banco_de_dados(nome_tabela: str, supervisor: str, table_view
     finally:
         if conn:
             conn.close()
-
 #
 def atualizar_celula_banco(item: QStandardItem, supervisor: str, nome_tabela: str, table_view: QTableView):
     conn = None
@@ -281,168 +274,155 @@ def atualizar_celula_banco(item: QStandardItem, supervisor: str, nome_tabela: st
     finally:
         if conn:
             conn.close()
-
 #
-def obter_ids_por_mes(mes):
+def obter_ids_por_mes(mes_selecionado):
     try:
-        conn = conectar()
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT id FROM {mes}")
-        ids = [str(row[0]) for row in cursor.fetchall()]
-        conn.close()
-        return ids
+        with conectar() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT id FROM {mes_selecionado}")
+            Lista_ids = [str(row[0]) for row in cursor.fetchall()]
+        return Lista_ids
     except Exception as e:
-        print(f"Erro ao buscar IDs do mês {mes}: {e}")
+        print(f"Erro ao buscar IDs do mês {mes_selecionado}: {e}")
         return []
-    
+#
 def obter_dados_por_id(mes_selecionado, id_selecionado):
     try:
-        conn = conectar()
-        cursor = conn.cursor()
-        
-        # Buscar os dados do registro com o ID informado
-        cursor.execute(f"SELECT * FROM {mes_selecionado} WHERE id = ?", (id_selecionado,))
-        dados = cursor.fetchone()
-        
-        if dados:
-            # Retorna os dados do registro, ou None se não encontrado
-            colunas = [description[0] for description in cursor.description]
-            return dict(zip(colunas, dados))
-        else:
-            return None
-        
+        with conectar() as conn:
+            cursor = conn.cursor()
+            # Buscar os dados do registro com o ID informado
+            cursor.execute(f"SELECT * FROM {mes_selecionado} WHERE id = ?", (id_selecionado,))
+            dados = cursor.fetchone()
+            
+            if dados:
+                # Retorna os dados do registro, ou None se não encontrado
+                colunas = [col[0] for col in cursor.description]
+                return dict(zip(colunas, dados))
+            else:
+                return None
+            
     except Exception as e:
         print(f"Erro ao obter dados do ID {id_selecionado}: {e}")
         return None
-    finally:
-        if conn:
-            conn.close()
 #
 def exportar_tabela_para_xlsx(nome_tabela: str, parent_widget, caminho_salvar=None):
     try:
-        conn = conectar()
-        cursor = conn.cursor()
-        cursor.execute(f'SELECT * FROM "{nome_tabela}"')
-        registros = cursor.fetchall()
-        colunas = [desc[0] for desc in cursor.description]
+        with conectar() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f'SELECT * FROM "{nome_tabela}"')
+            registros = cursor.fetchall()
+            colunas = [desc[0] for desc in cursor.description]
 
-        # Se o caminho não for passado, abre o diálogo para salvar
-        if not caminho_salvar:
-            caminho_salvar, _ = QFileDialog.getSaveFileName(
-                parent_widget, "Salvar como", f"{nome_tabela}.xlsx", "Arquivos Excel (*.xlsx)"
-            )
+            # Se o caminho não for passado, abre o diálogo para salvar
+            if not caminho_salvar:
+                caminho_salvar, _ = QFileDialog.getSaveFileName(
+                    parent_widget, "Salvar como", f"{nome_tabela}.xlsx", "Arquivos Excel (*.xlsx)"
+                )
 
-        if not caminho_salvar:
-            return  # Usuário cancelou
+            if not caminho_salvar:
+                return  # Usuário cancelou
 
-        # Criar planilha
-        wb = Workbook()
-        ws = wb.active
-        ws.title = nome_tabela
+            # Criar planilha
+            wb = Workbook()
+            ws = wb.active
+            ws.title = nome_tabela
 
-        # Estilo para células de hora
-        hora_style = NamedStyle(name="hora_style", number_format="HH:MM")
+            # Estilo para células de hora
+            hora_style = NamedStyle(name="hora_style", number_format="HH:MM:SS")
 
-        # Escrever cabeçalho
-        ws.append(colunas)
+            # Escrever cabeçalho
+            ws.append(colunas)
 
-        # Escrever dados e formatar as colunas com hora
-        for i, linha in enumerate(registros, start=2):  # Começa na linha 2 (linha 1 é o cabeçalho)
-            for j, valor in enumerate(linha):
-                # Se o valor for do tipo datetime ou hora, formate como hora
-                if isinstance(valor, datetime):  # Caso seja datetime (para hora com data)
-                    ws.cell(row=i, column=j + 1, value=valor).style = hora_style
-                elif isinstance(valor, str) and ':' in valor:  # Caso seja string e tenha o formato de hora
-                    try:
-                        # Tentativa de converter para hora se estiver no formato "HH:MM:SS"
-                        hora_valor = datetime.strptime(valor, '%H:%M:%S').time()
-                        ws.cell(row=i, column=j + 1, value=hora_valor).style = hora_style
-                    except ValueError:
-                        ws.cell(row=i, column=j + 1, value=valor)  # Caso não seja hora válida
-                else:
-                    ws.cell(row=i, column=j + 1, value=valor)
+            # Escrever dados e formatar as colunas com hora
+            for i, linha in enumerate(registros, start=2):  # Começa na linha 2 (linha 1 é o cabeçalho)
+                for j, valor in enumerate(linha):
+                    # Se o valor for do tipo datetime ou hora, formate como hora
+                    if isinstance(valor, datetime):  # Caso seja datetime (para hora com data)
+                        ws.cell(row=i, column=j + 1, value=valor).style = hora_style
+                    elif isinstance(valor, str) and ':' in valor:  # Caso seja string e tenha o formato de hora
+                        try:
+                            # Tentativa de converter para hora se estiver no formato "HH:MM:SS"
+                            hora_valor = datetime.strptime(valor, '%H:%M:%S').time()
+                            ws.cell(row=i, column=j + 1, value=hora_valor).style = hora_style
+                        except ValueError:
+                            ws.cell(row=i, column=j + 1, value=valor)  # Caso não seja hora válida
+                    else:
+                        ws.cell(row=i, column=j + 1, value=valor)
 
-        # Ajustar largura das colunas
-        for col in range(1, len(colunas) + 1):
-            max_length = 0
-            column = get_column_letter(col)
-            for row in ws.iter_rows(min_col=col, max_col=col):
-                for cell in row:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(cell.value)
-                    except TypeError:
-                        pass
-            adjusted_width = (max_length + 2)
-            ws.column_dimensions[column].width = adjusted_width
+            # Ajustar largura das colunas
+            for col in range(1, len(colunas) + 1):
+                max_length = 0
+                column = get_column_letter(col)
+                for row in ws.iter_rows(min_col=col, max_col=col):
+                    for cell in row:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(cell.value)
+                        except TypeError:
+                            pass
+                adjusted_width = (max_length + 2)
+                ws.column_dimensions[column].width = adjusted_width
 
-        # Salvar arquivo
-        wb.save(caminho_salvar)
+            # Salvar arquivo
+            wb.save(caminho_salvar)
 
         QMessageBox.information(parent_widget, "Exportado", f"Tabela '{nome_tabela}' exportada com sucesso para:\n{caminho_salvar}")
     except Exception as e:
         QMessageBox.critical(parent_widget, "Erro", f"Erro ao exportar: {str(e)}")
-    finally:
-        conn.close()
 #
 def inserir_registro(mes_selecionado, dados, parent_widget=None):
     if not dados:
         QMessageBox.warning(parent_widget, "Aviso", "Por favor, insira os dados no campo de texto.")
         return
 
+    ano_atual = datetime.now().year
+
+    numero_do_mes = meses.index(mes_selecionado) + 1
+    dias_no_mes = calendar.monthrange(ano_atual, numero_do_mes)[1]
+
+    colunas = ['nome', 'supervisor', 'total_horas'] + [
+        f'{dia:02d}/{numero_do_mes:02d}/{ano_atual}' for dia in range(1, dias_no_mes + 1)
+    ]
+
+    linhas = dados.strip().split("\n")
+    erros = []
     try:
-        conn = conectar()
-        cursor = conn.cursor()
-        ano_atual = datetime.now().year
+        with conectar() as conn:
+            for linha in linhas:
+                if not linha.strip():
+                    continue
+                try:
+                    nome, supervisor = [parte.strip() for parte in linha.split(",")]
+                    valores = [nome, supervisor, "00:00:00"] + ["00:00:00"] * dias_no_mes
 
-        numero_do_mes = meses.index(mes_selecionado) + 1
-        dias_no_mes = calendar.monthrange(ano_atual, numero_do_mes)[1]
+                    cursor = conn.cursor()
+                    colunas_sql = ', '.join([f'"{c}"' for c in colunas])
+                    valores_sql = ', '.join(['?'] * len(valores))
+                    comando_sql = f'''
+                        INSERT INTO "{mes_selecionado}" ({colunas_sql})
+                        VALUES ({valores_sql})
+                    '''
+                    cursor.execute(comando_sql, valores)
+                except ValueError:
+                    erros.append(f"A linha '{linha}' não está no formato correto (esperado: nome, supervisor).")
+                
+            conn.commit()
+                
+    except sqlite3.Error as e:
+        QMessageBox.critical(None, "Erro no Banco de Dados", str(e))
+        return
+    except Exception as e:
+        QMessageBox.critical(None, "Erro inesperado", str(e))
+        return
 
-        colunas = ['nome', 'supervisor', 'total_horas'] + [
-            f'{dia:02d}/{numero_do_mes:02d}/{ano_atual}' for dia in range(1, dias_no_mes + 1)
-        ]
-
-        linhas = dados.strip().split("\n")
-        erros = []
-
-        for linha in linhas:
-            if not linha.strip():
-                continue
-            try:
-                nome, supervisor = [parte.strip() for parte in linha.split(",")]
-                valores = [nome, supervisor, "00:00:00"] + ["00:00:00"] * dias_no_mes
-
-                colunas_sql = ', '.join([f'"{c}"' for c in colunas])
-                valores_sql = ', '.join(['?'] * len(valores))
-                comando_sql = f'''
-                    INSERT INTO "{mes_selecionado}" ({colunas_sql})
-                    VALUES ({valores_sql})
-                '''
-                cursor.execute(comando_sql, valores)
-
-            except ValueError:
-                erros.append(f"A linha '{linha}' não está no formato correto (esperado: nome, supervisor).")
-            except sqlite3.Error as e:
-                conn.rollback()
-                QMessageBox.critical(parent_widget, "Erro no Banco de Dados", str(e))
-                return
-
-        conn.commit()
-
-        if erros:
-            QMessageBox.warning(None, "Linhas com Erros", "\n".join(erros))
-        else:
-            QMessageBox.information(None, "Sucesso", f"Todos os dados foram salvos na tabela '{mes_selecionado}'.")
-
-    finally:
-        if conn:
-            conn.close()
+    if erros:
+        QMessageBox.warning(None, "Linhas com Erros", "\n".join(erros))
+    else:
+        QMessageBox.information(None, "Sucesso", f"Todos os dados foram salvos na tabela '{mes_selecionado}'.")
 #
 def excluir_Registro(mes_selecionado, id_selecionado):
-    conn = conectar()
-    cursor = conn.cursor()
-    cursor.execute(f"DELETE FROM {mes_selecionado} WHERE id = ?", (id_selecionado,))
-    conn.commit()
-    conn.close()
+    with conectar() as conn:
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM {mes_selecionado} WHERE id = ?", (id_selecionado,))
+        conn.commit()
 #
-#teste e retest
