@@ -2,9 +2,9 @@
 import sys
 from PySide2.QtWidgets import QApplication, QMainWindow
 from interface_ui import Ui_telaAplicativo
-from services import carregar_tabelaBancoDados, criar_tabela, carregar_supervisores
+from services import carregar_tabela_banco_de_dados, criar_tabela, carregar_supervisores
 
-#ui
+#ui 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
 
         nome_Tabela = self.interface_ui.comboVisualizarMes.currentText()
         supervisores = self.interface_ui.comboFiltro.currentText()
-        carregar_tabelaBancoDados(nome_Tabela, supervisores, self.interface_ui.tabelaBancoDados)
+        carregar_tabela_banco_de_dados(nome_Tabela, supervisores, self.interface_ui.tabelaBancoDados)
 
     def carregar_dados(self):
         self.interface_ui.label_3.hide()
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.interface_ui.comboFiltro.blockSignals(False)  # <- Libera sinal
 
         supervisores = self.interface_ui.comboFiltro.currentText()
-        carregar_tabelaBancoDados(nome_Tabela, supervisores, self.interface_ui.tabelaBancoDados)
+        carregar_tabela_banco_de_dados(nome_Tabela, supervisores, self.interface_ui.tabelaBancoDados)
 
 
 if __name__ == "__main__":
