@@ -1,0 +1,102 @@
+#Abrir o programa
+    python main.py
+
+#instalar os requerimentos para que o projeto funcione
+    pip install -r requirements.txt
+
+#Ativar ambiente virtual
+    .\venv3.10\Scripts\activate
+
+#transforma o arquivo .ui do QT_Designer em um arquivo .py
+    pyside2-uic interface.ui -o interface.py
+
+#Gerar um executavel
+    pip install pyinstaller
+
+    --onefile: cria um único executável .exe (sem a pasta _internal visível)
+    --windowed: evita abrir o terminal junto com a interface (usado para apps com GUI como PySide2)
+    --noconfirm: sobrescreve arquivos anteriores sem perguntar
+
+    pyinstaller --noconfirm --windowed --onefile main.py
+
+
+    pyinstaller --noconfirm --windowed main.py
+
+    pyinstaller main.py --noconfirm --add-data "plugins;plugins" --add-data "core;core"    
+
+#
+    git status
+    git add .
+    git commit -m "teste" #adicionar uma descrição da alteração
+    git push origin main    
+
+#traz as alterações feitas no main para a branch que esta usando.(precisa estar an branch auxiliar)
+    git checkout modificar_services
+    git fetch origin
+    git rebase origin/main
+
+# comandos GitHub
+    🟡 INICIALIZAÇÃO E CONFIGURAÇÃO
+    Comando	Descrição
+        git init	                                    Cria um novo repositório Git em um diretório local.
+        git config --global user.name "Seu Nome"	    Define seu nome de usuário para todos os repositórios.
+        git config --global user.email "seu@email.com"	Define seu e-mail global para todos os repositórios.
+        git config --list	                            Mostra as configurações atuais do Git.
+
+    🟢 TRABALHANDO COM REPOSITÓRIOS
+    Comando	Descrição
+        git clone <url>	                                Clona um repositório remoto (como o GitHub) para seu computador.
+        git remote -v	                                Mostra os repositórios remotos conectados.
+        git remote add origin <url>	                    Conecta seu repositório local com um remoto chamado origin.
+
+    🔵 STATUS E MONITORAMENTO
+    Comando	Descrição
+        git status	                                    Mostra quais arquivos foram modificados, adicionados ou estão prontos para commit.
+        git log	                                        Mostra o histórico de commits do projeto.
+        git diff	                                    Mostra as diferenças entre arquivos modificados e os que estão no último commit.
+
+    🟣 ADICIONAR E COMMITAR
+    Comando	Descrição
+        git add <arquivo>	                            Adiciona um arquivo específico à área de preparação (staging).
+        git add .	                                    Adiciona todos os arquivos modificados no projeto.
+        git commit -m "mensagem"	                    Registra um snapshot do projeto com uma mensagem descritiva.
+
+    🔴 ENVIAR E ATUALIZAR (PUSH & PULL)
+    Comando	Descrição
+        git push origin main	                        Envia os commits locais para o repositório remoto (branch main).
+        git pull origin main	                        Baixa as alterações do repositório remoto e atualiza seu repositório local.
+        git fetch	                                    Baixa os dados mais recentes do repositório remoto sem aplicar (merge) automático.
+
+    🟤 BRANCHES (RAMIFICAÇÕES)
+    Comando	Descrição
+        git branch	                                    Lista todas as branches.
+        git branch <nome>	                            Cria uma nova branch.
+        git checkout <nome>	                            Troca para outra branch existente.
+        git checkout -b <nome>	                        Cria e já muda para a nova branch.
+        git merge <nome>	                            Mescla (merge) uma branch com a atual.
+        git branch -d <nome>	                        Exclui uma branch local.
+
+    ⚫ DESCARTAR E REVERTER
+    Comando	Descrição
+        git restore <arquivo>	                        Descarta alterações não comitadas em um arquivo.
+        git reset	                                    Remove arquivos da área de staging.
+        git reset --hard	                            Desfaz todas as alterações e retorna ao último commit. (perigoso)
+        git revert <hash>	                            Reverte um commit específico, criando um novo commit que desfaz o anterior.
+
+    ⚪ OUTROS COMANDOS ÚTEIS
+    Comando	Descrição
+        git stash	                                    Guarda temporariamente alterações não comitadas.
+        git stash pop	                                Recupera o que foi guardado com git stash.
+        git tag	                                        Lista ou cria marcas (tags) em commits específicos.
+        git blame <arquivo>	                            Mostra linha por linha quem modificou o quê em um arquivo.
+
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
