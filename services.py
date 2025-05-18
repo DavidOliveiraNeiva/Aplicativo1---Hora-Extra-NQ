@@ -2,7 +2,7 @@
 import sqlite3
 import calendar
 import os
-import traceback
+
 from openpyxl import Workbook
 from datetime import datetime
 from PySide2.QtCore import Qt, QSortFilterProxyModel, QRegularExpression
@@ -88,7 +88,6 @@ def carregar_tabelaBancoDados(nome_tabela: str, supervisor: str, table_view: QTa
         conn = conectar()
         cursor = conn.cursor()
         
-        #print("este é o supervisor "+supervisor)
         if supervisor == "Todos":
             query = f"SELECT * FROM {nome_tabela}"
             cursor.execute(query)
