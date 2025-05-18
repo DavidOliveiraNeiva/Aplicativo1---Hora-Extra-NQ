@@ -11,16 +11,18 @@ from PySide2.QtGui import QStandardItemModel, QStandardItem
 from openpyxl.styles import NamedStyle
 from openpyxl.utils import get_column_letter
 
-#setmodel table_view
+meses = [
+            "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ]
+
+# 
 def conectar():
     return sqlite3.connect("database_horas_extras.db")
 #
 def criar_tabela():
     if not os.path.exists("database_horas_extras.db"):
-        meses = [
-            "Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho",
-            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-        ]
+        
         
         with conectar() as conn:
             cursor = conn.cursor()
@@ -80,7 +82,7 @@ def carregar_supervisores(nome_tabela: str):
 
     return lista_supervisores
 #
-def carregar_tabelaBancoDados(nome_tabela: str, supervisor: str, table_view: QTableView):
+def carregar_tabela_banco_de_dados(nome_tabela: str, supervisor: str, table_view: QTableView):
     #print("[DEBUG 1] este é o supervisor:", supervisor)
     #traceback.print_stack(limit=2)
 
@@ -207,7 +209,7 @@ def atualizar_celula_banco(item: QStandardItem, supervisor: str, nome_tabela: st
             partes = novo_valor.strip().split(':')
             if len(partes) != 3:
                 QMessageBox.warning(None, "Erro", "Formato de hora inválido! Use HH:MM:SS.")
-                
+
                 return
 
             try:
@@ -272,7 +274,7 @@ def atualizar_celula_banco(item: QStandardItem, supervisor: str, nome_tabela: st
             ''', (total_horas_str, id_item))
 
         conn.commit()
-        carregar_tabelaBancoDados(nome_tabela, supervisor, table_view)
+        carregar_tabela_banco_de_dados(nome_tabela, supervisor, table_view)
 
     except Exception as e:
         QMessageBox.critical(None, "Erro", f"Erro ao atualizar o banco de dados: {str(e)}")
@@ -388,11 +390,6 @@ def inserir_registro(mes_selecionado, dados, parent_widget=None):
     if not dados:
         QMessageBox.warning(parent_widget, "Aviso", "Por favor, insira os dados no campo de texto.")
         return
-
-    meses = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ]
 
     try:
         conn = conectar()
