@@ -207,6 +207,7 @@ def atualizar_celula_banco(item: QStandardItem, supervisor: str, nome_tabela: st
             partes = novo_valor.strip().split(':')
             if len(partes) != 3:
                 QMessageBox.warning(None, "Erro", "Formato de hora inválido! Use HH:MM:SS.")
+                
                 return
 
             try:
