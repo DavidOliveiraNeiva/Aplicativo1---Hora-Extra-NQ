@@ -1,0 +1,2 @@
+#transforma uma tela do QT Designer em .py
+pyside2-uic tela.ui -o tela.py
