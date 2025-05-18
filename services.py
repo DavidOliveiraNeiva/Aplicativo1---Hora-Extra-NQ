@@ -90,7 +90,6 @@ def carregar_tabela_banco_de_dados(nome_tabela: str, supervisor: str, table_view
         conn = conectar()
         cursor = conn.cursor()
         
-        #print("este é o supervisor "+supervisor)
         if supervisor == "Todos":
             query = f"SELECT * FROM {nome_tabela}"
             cursor.execute(query)
@@ -446,4 +445,4 @@ def excluir_Registro(mes_selecionado, id_selecionado):
     conn.commit()
     conn.close()
 #
-#teste
+#teste e retest
