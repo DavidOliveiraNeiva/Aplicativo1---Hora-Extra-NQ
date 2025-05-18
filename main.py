@@ -15,39 +15,23 @@ class MainWindow(QMainWindow):
         self.interface_ui.comboFiltro.currentIndexChanged.connect(self.filtrar_por_supervisor)
 
     def filtrar_por_supervisor(self):
-        supervisor = self.interface_ui.comboFiltro.currentText()
-        nome_mes = self.interface_ui.comboVisualizarMes.currentText()
 
-        conn = conectar()
-        cursor = conn.cursor()
-
-        if supervisor == "Todos":
-            query = f"SELECT * FROM {nome_mes}"
-            parametros = ()
-        else:
-            query = f"SELECT * FROM {nome_mes} WHERE supervisor = ?"
-            parametros = (supervisor,)
-
-        cursor.execute(query, parametros)
-        registros = cursor.fetchall()
-        colunas = [desc[0] for desc in cursor.description]
-
-        cursor.close()
-        conn.close()
-
-        self.atualizar_tabela(registros, colunas)
-
+        nome_Tabela = self.interface_ui.comboVisualizarMes.currentText()
+        supervisores = self.interface_ui.comboFiltro.currentText()
+        carregar_tabelaBancoDados(nome_Tabela, supervisores, self.interface_ui.tabelaBancoDados)
 
     def carregar_dados(self):
-        #nome_Supervisor = "david"
         self.interface_ui.label_3.hide()
         self.interface_ui.label_4.show()
-        
+
+        self.interface_ui.comboFiltro.blockSignals(True)  # <- Bloqueia sinal
         self.interface_ui.comboFiltro.clear()
         nome_Tabela = self.interface_ui.comboVisualizarMes.currentText()
-        supervisores = carregar_supervisores(nome_Tabela)
-        self.interface_ui.comboFiltro.addItems(supervisores)
-        carregar_tabelaBancoDados(nome_Tabela, self.interface_ui.tabelaBancoDados)
+        self.interface_ui.comboFiltro.addItems(carregar_supervisores(nome_Tabela))
+        self.interface_ui.comboFiltro.blockSignals(False)  # <- Libera sinal
+
+        supervisores = self.interface_ui.comboFiltro.currentText()
+        carregar_tabelaBancoDados(nome_Tabela, supervisores, self.interface_ui.tabelaBancoDados)
 
 
 if __name__ == "__main__":

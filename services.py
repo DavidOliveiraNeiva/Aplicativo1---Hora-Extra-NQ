@@ -2,6 +2,7 @@
 import sqlite3
 import calendar
 import os
+import traceback
 from openpyxl import Workbook
 from datetime import datetime
 from PySide2.QtCore import Qt, QSortFilterProxyModel, QRegularExpression
@@ -78,26 +79,26 @@ def carregar_supervisores(nome_tabela: str):
     lista_supervisores.insert(0, "Todos")
 
     return lista_supervisores
-
-
 #
-def carregar_tabelaBancoDados(nome_tabela: str, table_view: QTableView):
+def carregar_tabelaBancoDados(nome_tabela: str, supervisor: str, table_view: QTableView):
+    #print("[DEBUG 1] este é o supervisor:", supervisor)
+    #traceback.print_stack(limit=2)
+
     try:
         conn = conectar()
         cursor = conn.cursor()
+        
+        #print("este é o supervisor "+supervisor)
+        if supervisor == "Todos":
+            query = f"SELECT * FROM {nome_tabela}"
+            cursor.execute(query)
+        else:
+            query = f"SELECT * FROM {nome_tabela} WHERE supervisor = ?"
+            parametros = (supervisor,)
+            cursor.execute(query, parametros)
 
-        cursor.execute(f'SELECT * FROM "{nome_tabela}"')
         registros = cursor.fetchall()
         colunas = [description[0] for description in cursor.description]
-
-        #if nome_Filtro == "*":
-        #    cursor.execute(f'SELECT * FROM "{nome_tabela}"')
-        #    registros = cursor.fetchall()
-        #    colunas = [description[0] for description in cursor.description]
-        #else:
-        #    cursor.execute(f"SELECT * FROM {nome_tabela} WHERE supervisor = ?", (nome_Filtro,))
-        #    registros = cursor.fetchall()
-        #    colunas = [description[0] for description in cursor.description]
 
         # Criar modelo de tabela
         modelo = QStandardItemModel()
@@ -167,25 +168,24 @@ def carregar_tabelaBancoDados(nome_tabela: str, table_view: QTableView):
             else:
                 table_view.resizeColumnToContents(i)  # Tamanho automático para as demais
 
+        def on_item_changed(item):
+            try:
+                modelo.itemChanged.disconnect()
+                atualizar_celula_banco(item, supervisor, nome_tabela, table_view)
+            finally:
+                modelo.itemChanged.connect(on_item_changed)
+
+        modelo.itemChanged.connect(on_item_changed)
+
     except Exception as e:
         QMessageBox.critical(table_view, "Erro", f"Erro ao carregar os dados: {str(e)}")
 
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
-    def on_item_changed(item):
-        modelo.itemChanged.disconnect()
-        atualizar_celula_banco(item, nome_tabela, table_view)
-        modelo.itemChanged.connect(on_item_changed)
-
-        try:
-            modelo.itemChanged.disconnect()
-        except TypeError:
-            pass
-
-    modelo.itemChanged.connect(on_item_changed)
 #
-def atualizar_celula_banco(item: QStandardItem, nome_tabela: str, table_view: QTableView):
+def atualizar_celula_banco(item: QStandardItem, supervisor: str, nome_tabela: str, table_view: QTableView):
     conn = None
     try:
         linha = item.row()
@@ -271,7 +271,7 @@ def atualizar_celula_banco(item: QStandardItem, nome_tabela: str, table_view: QT
             ''', (total_horas_str, id_item))
 
         conn.commit()
-        carregar_tabelaBancoDados(nome_tabela, table_view)
+        carregar_tabelaBancoDados(nome_tabela, supervisor, table_view)
 
     except Exception as e:
         QMessageBox.critical(None, "Erro", f"Erro ao atualizar o banco de dados: {str(e)}")
