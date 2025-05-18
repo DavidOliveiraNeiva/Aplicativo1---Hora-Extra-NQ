@@ -2,7 +2,7 @@
 import sqlite3
 import calendar
 import os
-import traceback
+
 from openpyxl import Workbook
 from datetime import datetime
 from PySide2.QtCore import Qt, QSortFilterProxyModel, QRegularExpression
@@ -448,6 +448,4 @@ def excluir_Registro(mes_selecionado, id_selecionado):
     conn.commit()
     conn.close()
 #
-#def salvar_alteracoes():
-    #asd
 #
